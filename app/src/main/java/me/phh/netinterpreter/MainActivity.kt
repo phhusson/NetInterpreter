@@ -81,7 +81,10 @@ class MainActivity : AppCompatActivity() {
                 } else if(w.startsWith(":")) {
                     val v = stack.removeLast()
                     val methodName = w.substring(1)
-                    val methods = v!!.javaClass.methods.filter { it.toString().contains(methodName) }
+                    Log.d(TAG, "Executing function on top of $v")
+                    val obj = if(v is Class<*>) null else v
+                    val cl = if(v is Class<*>) v else v!!.javaClass
+                    val methods = cl.methods.filter { it.toString().contains(methodName) }
                     if(methods.size != 1) {
                         Log.d(TAG, "Non-unique matching methods")
                         for(m in methods) {
@@ -94,7 +97,7 @@ class MainActivity : AppCompatActivity() {
                     for(i in 0 until method.parameterCount) {
                         parameters[i] = stack.removeLast()
                     }
-                    val res = method.invoke(v, *parameters)
+                    val res = method.invoke(obj, *parameters)
                     stack.add(res)
                 } else if(w.startsWith("+")) {
                     val v = w.substring(1)
@@ -109,6 +112,13 @@ class MainActivity : AppCompatActivity() {
                     val field = obj.javaClass.getField(fieldName)
                     field.isAccessible = true
                     field.set(obj, value)
+                } else if(w.startsWith("0")) {
+                    val v = w.substring(2)
+                    val base = if(w[1] == 'd') 10 else 16
+                    stack.add(Integer.parseInt(v, base))
+                } else if(w.startsWith("1")) {
+                    val v = w.substring(1)
+                    stack.add(Class.forName(v))
                 }
             }
         }

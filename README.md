@@ -36,6 +36,9 @@ It's stack based, plus support storing global variables. Commands are split on s
 - """ if a line starts with """, everything after """ until new-line is added at the top of stack
 - +xx.yy.zz creates an object of type xx.yy.zz with empty parameters constructor
 - !<name> will set field <name> of <top of stack> to <second top of stack> and consume both
+- 0dyyy add decimal number yyy on top of stack
+- 0xyyy add hexadecimal number yyy on top of stack
+- 1<name> loads class name
 
 Variables are global across TCP connections.
 Stack is reset at every TCP connection.
