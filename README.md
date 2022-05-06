@@ -28,6 +28,7 @@ It's stack based, plus support storing global variables. Commands are split on s
 - DISPLAY displays the toString of the top of the stack
 - INSPECT lists all constructor methods and fields of top of the stack's class
 - NULL adds null on stack
+- EXIT closes socket
 - ~<name> consumes top of stack and put it into <name> variable
 - =<name> loads <name> variable at top of stack
 - .<name> loads field <name> from top of stack

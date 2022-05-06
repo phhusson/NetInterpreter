@@ -28,7 +28,12 @@ class MainActivity : AppCompatActivity() {
             val words = line.split(" ")
             for(w in words) {
                 Log.d(TAG, "Executing $w")
-                if(w == "STACK") {
+                if(w == "EXIT") {
+                    input.close()
+                    output.close()
+                    socket.close()
+                    break
+                } else if(w == "STACK") {
                     output.write("Current stack content:\n")
                     for(v in stack) {
                         output.write(" - ${v.toString()}\n")

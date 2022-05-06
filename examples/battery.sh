@@ -16,7 +16,7 @@ batteryProperty() {
         echo 'DISPLAY'
 
         # Close connection
-        echo ':dewodoeiwoijdeowiijdoewi'
+        echo 'EXIT'
     ) | nc -v localhost 9988
 }
 

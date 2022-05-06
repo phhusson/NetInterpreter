@@ -26,7 +26,7 @@ connectNewWifi() {
         echo 'NULL =wifiid =wifi :connect(int,android.net.wifi.WifiManager$ActionListener)'
         echo 'STACK'
         #Close connection
-        echo ':dewodoeiwoijdeowiijdoewi'
+        echo 'EXIT'
     ) | nc -v localhost 9988
 }
 
