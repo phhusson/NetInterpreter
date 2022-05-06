@@ -18,7 +18,14 @@ class MainActivity : AppCompatActivity() {
         var stack = mutableListOf<Any?>(this)
         while(!socket.isClosed) {
             output.flush()
-            val words = input.readLine().split(" ")
+            val line = input.readLine()
+            if(line.startsWith("\"\"\"")) {
+                val w = line.substring(3)
+                Log.d(TAG, "Adding \"$w\"")
+                stack.add(w)
+                continue
+            }
+            val words = line.split(" ")
             for(w in words) {
                 Log.d(TAG, "Executing $w")
                 if(w == "STACK") {
@@ -49,17 +56,19 @@ class MainActivity : AppCompatActivity() {
                     val c = v!!.javaClass
                     output.write("Type is $c\n")
                     output.write("Constructors:\n")
-                    for(constructor in c.constructors) {
+                    for (constructor in c.constructors) {
                         output.write(" - ${constructor.toString()}\n")
                     }
                     output.write("Methods:\n")
-                    for(method in c.methods) {
+                    for (method in c.methods) {
                         output.write(" - ${method.toString()}\n")
                     }
                     output.write("Fields:\n")
-                    for(field in c.fields) {
+                    for (field in c.fields) {
                         output.write(" - ${field.toString()}\n")
                     }
+                } else if(w == "NULL") {
+                    stack.add(null)
                 } else if(w.startsWith(".")) {
                     val v = stack.removeLast()
                     val fieldName = w.substring(1)
@@ -87,6 +96,19 @@ class MainActivity : AppCompatActivity() {
                     }
                     val res = method.invoke(v, *parameters)
                     stack.add(res)
+                } else if(w.startsWith("+")) {
+                    val v = w.substring(1)
+                    val cl = Class.forName(v)
+                    val constr = cl.getConstructor()
+                    constr.isAccessible = true
+                    stack.add(constr.newInstance())
+                } else if(w.startsWith("!")) {
+                    val fieldName = w.substring(1)
+                    val obj = stack.removeLast()!!
+                    val value = stack.removeLast()
+                    val field = obj.javaClass.getField(fieldName)
+                    field.isAccessible = true
+                    field.set(obj, value)
                 }
             }
         }
