@@ -24,3 +24,12 @@ enablePowerSaveModeEnabled() {
         echo 'EXIT'
     ) | nc -v localhost 9988
 }
+
+rebootDevice() {
+    (
+        echo 'DUP ~context'
+        echo '"power INV :getSystemService(java.lang.String) ~power'
+        echo '" =power :reboot(java.lang.String)'
+        echo 'EXIT'
+    ) | nc -v localhost 9988
+}
