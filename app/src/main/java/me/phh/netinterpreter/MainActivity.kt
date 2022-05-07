@@ -1,15 +1,28 @@
 package me.phh.netinterpreter
 
-import androidx.appcompat.app.AppCompatActivity
+import android.annotation.SuppressLint
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import com.android.dx.stock.ProxyBuilder
+import java.lang.reflect.InvocationHandler
+import java.lang.reflect.Method
 import java.net.*
+import java.util.*
+import java.util.concurrent.Executor
 import kotlin.concurrent.thread
+
 
 class MainActivity : AppCompatActivity() {
     val TAG = "NetInterpreter"
     val variablesLock = Any()
     val variables = java.util.HashMap<String, Any?>()
+    val doneCallbacksLock = Object()
+    val doneCallbacks = HashMap<String, Array<Any?>>()
 
     fun handleClient(socket: Socket) {
         val input = socket.getInputStream().bufferedReader()
@@ -35,9 +48,12 @@ class MainActivity : AppCompatActivity() {
                     break
                 } else if(w == "STACK") {
                     output.write("Current stack content:\n")
-                    for(v in stack) {
+                    for (v in stack) {
                         output.write(" - ${v.toString()}\n")
                     }
+                } else if(w == "NEW_BYTE_ARRAY") {
+                    val size = stack.removeLast() as Integer
+                    stack.add(ByteArray(size.toInt()))
                 } else if(w == "DUP") {
                     stack.add(stack.last())
                 } else if(w == "INV") {
@@ -58,7 +74,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 } else if(w == "INSPECT") {
                     val v = stack.last()
-                    val c = v!!.javaClass
+                    val c = if(v is Class<*>) v else v!!.javaClass
                     output.write("Type is $c\n")
                     output.write("Constructors:\n")
                     for (constructor in c.constructors) {
@@ -74,12 +90,18 @@ class MainActivity : AppCompatActivity() {
                     }
                 } else if(w == "NULL") {
                     stack.add(null)
+                } else if(w == "DROP") {
+                    stack.removeLast()
                 } else if(w.startsWith(".")) {
                     val v = stack.removeLast()
                     val fieldName = w.substring(1)
-                    val field = v!!.javaClass.getField(fieldName)
+                    val field = if(v is Class<*>) v.getField(fieldName) else v!!.javaClass.getField(fieldName)
                     field.isAccessible = true
-                    stack.add(field.get(v)!!)
+                    if(v is Class<*>) {
+                        stack.add(field.get(null))
+                    } else {
+                        stack.add(field.get(v))
+                    }
                 } else if(w.startsWith("\"")) {
                     val str = w.substring(1)
                     stack.add(str)
@@ -106,10 +128,22 @@ class MainActivity : AppCompatActivity() {
                     stack.add(res)
                 } else if(w.startsWith("+")) {
                     val v = w.substring(1)
-                    val cl = Class.forName(v)
-                    val constr = cl.getConstructor()
+                    val cl = stack.removeLast() as Class<*>
+                    val constructors = cl.constructors.filter { it.toString().contains(v) }
+                    if(constructors.size != 1) {
+                        Log.d(TAG, "Non-unique matching constructors")
+                        for(m in constructors) {
+                            Log.d(TAG, " - ${m.toString()}")
+                        }
+                        throw Exception("Non-unique matching constructors")
+                    }
+                    val constr = constructors[0]
                     constr.isAccessible = true
-                    stack.add(constr.newInstance())
+                    val parameters = Array<Any?>(constr.parameterCount, { null })
+                    for(i in 0 until constr.parameterCount) {
+                        parameters[i] = stack.removeLast()
+                    }
+                    stack.add(constr.newInstance(*parameters))
                 } else if(w.startsWith("!")) {
                     val fieldName = w.substring(1)
                     val obj = stack.removeLast()!!
@@ -124,12 +158,82 @@ class MainActivity : AppCompatActivity() {
                 } else if(w.startsWith("1")) {
                     val v = w.substring(1)
                     stack.add(Class.forName(v))
+                } else if(w.startsWith("[")) {
+                    val off = Integer.parseInt(w.substring(1))
+                    val o = stack.removeLast()
+                    if(o is LongArray) {
+                        stack.add(o[off])
+                    } else if(o is IntArray) {
+                        stack.add(o[off])
+                    } else if(o is FloatArray) {
+                        stack.add(o[off])
+                    } else if(o is Array<*>) {
+                        stack.add(o[off])
+                    } else {
+                        throw Exception("Unknown type of array $o")
+                    }
+                } else if(w.startsWith("90")) {
+                    val className = w.substring(2)
+                    val cl = Class.forName(className)
+                    val handler = object: InvocationHandler {
+                        override fun invoke(proxy: Any, method: Method, args: Array<Any?>): Any? {
+                            synchronized(doneCallbacksLock) {
+                                val key = className + "." + method.name
+                                Log.d(TAG, "Got key \"$key\"")
+                                doneCallbacks[key] = args
+                                doneCallbacksLock.notifyAll()
+                            }
+                            try {
+                                val result = ProxyBuilder.callSuper(proxy, method, *args)
+                                Log.d(
+                                    TAG, "Method: " + method.getName() + " args: "
+                                            + args.toList() + " result: " + result
+                                );
+                                return result
+                            } catch(t: java.lang.AbstractMethodError) {
+                                Log.d(TAG, "Method: ${method.name} args ${args.toList()}")
+                                Log.d(TAG, "Couldn't call super, returning null")
+                                return null
+                            }
+                        }
+
+                    }
+
+                    stack.add(
+                        ProxyBuilder
+                            .forClass(cl)
+                            .dexCache(getDir("dx", MODE_PRIVATE))
+                            .handler(handler)
+                            .build())
+                } else if(w.startsWith("91")) {
+                    val v = w.substring(2)
+                    synchronized(doneCallbacksLock) {
+                        doneCallbacks.remove(v)
+                    }
+                } else if(w.startsWith("92")) {
+                    val v = w.substring(2)
+                    val result = synchronized(doneCallbacksLock) {
+                        while(doneCallbacks.getOrDefault(v, null) == null) {
+                            doneCallbacksLock.wait()
+                        }
+                        doneCallbacks[v]
+                    }
+                    stack.add(result)
                 }
             }
         }
     }
 
+    @SuppressLint("MissingPermission")
+    fun initVariables() {
+        variables["context"] = this
+        variables["handler"] = Handler(HandlerThread("HandlerThread").also {it.start() }.looper)
+        val androidHandler = variables["handler"] as Handler
+        variables["executor"]  = Executor { p0 -> androidHandler.post(p0) }
+    }
+
     fun server() {
+        initVariables()
         val serverSocket = ServerSocket(9988, 20, Inet6Address.getLocalHost())
 
         while(!serverSocket.isClosed) {

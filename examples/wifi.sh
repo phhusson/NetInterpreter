@@ -13,7 +13,7 @@ connectNewWifi() {
         # Grab wifi service and store it in `wifi`
         echo '"wifi INV :getSystemService(java.lang.String) ~wifi'
         # Create a wifi configuration
-        echo '+android.net.wifi.WifiConfiguration ~wificonfig'
+        echo '1android.net.wifi.WifiConfiguration +() ~wificonfig'
         # Set SSID (must be encoded as "SSID" for Android)
         string "\"$ssid\""
             echo '=wificonfig !SSID'

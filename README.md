@@ -29,22 +29,33 @@ It's stack based, plus support storing global variables. Commands are split on s
 - INSPECT lists all constructor methods and fields of top of the stack's class
 - NULL adds null on stack
 - EXIT closes socket
+- DROP removes top of stack
 - ~<name> consumes top of stack and put it into <name> variable
 - =<name> loads <name> variable at top of stack
 - .<name> loads field <name> from top of stack
 - :<matcher> assuming there is exactly one matching function, call the function with arguments on the stack
 - "xxxx puts the string xxxx on top of the stack
 - """ if a line starts with """, everything after """ until new-line is added at the top of stack
-- +xx.yy.zz creates an object of type xx.yy.zz with empty parameters constructor
+- +(zz) creates an object of type <top of stack> (MUST BE a Class<>, created with 1xxx for instance) with parameters matching (zz)
 - !<name> will set field <name> of <top of stack> to <second top of stack> and consume both
 - 0dyyy add decimal number yyy on top of stack
 - 0xyyy add hexadecimal number yyy on top of stack
 - 1<name> loads class name
+- `[<number>` does `<top of stack>[number]` array access drops top of stack and pushes the result on top of stack
+- 90<className> implements an abstract class (used to implement listener)
+- 91<className>.<methodName> clears passed called to this function, and declare interest in waiting for that method
+- 92<className>.<methodName> waits for an implemented abstract class to have its methodName called, then puts the arguments of that callback on top of stack
+- `NEW_BYTE_ARRAY` create a byte array of size <top of stack> (must be int)
 
 Variables are global across TCP connections.
 Stack is reset at every TCP connection.
 
 Check `adb logcat -s NetInterpreter` to understand unexpected behavior (and source code of course).
+
+## Listeners
+
+Android APIs relies A LOT on listeners, so we need to be able to deal with it.
+It is still unclear as of now what is the best route to handle them, so it is highly likely to change.
 
 ## Sample usage from computer
 
