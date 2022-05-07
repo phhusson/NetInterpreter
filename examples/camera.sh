@@ -1,5 +1,7 @@
 #!/bin/bash
 
+
+# See camera.kt for reference minized kt code
 picture() {
     (
         # Store context in var `context`
