@@ -91,5 +91,3 @@ picture() {
         echo 'EXIT'
     ) | nc -v localhost 9988
 }
-
-picture
