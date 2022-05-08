@@ -33,3 +33,21 @@ rebootDevice() {
         echo 'EXIT'
     ) | nc -v localhost 9988
 }
+
+wakelock() {
+    (
+        echo 'DUP ~context'
+        echo '"power INV :getSystemService(java.lang.String) ~power'
+        echo '=power .PARTIAL_WAKE_LOCK ~PARTIAL_WAKE_LOCK'
+        echo "\"$1" ' =PARTIAL_WAKE_LOCK =power :newWakeLock(int,java.lang.String)' "~wakelock.$1"
+        echo "=wakelock.$1" 'INSPECT :acquire() STACK'
+        echo 'EXIT'
+    ) | nc -v localhost 9988
+}
+
+freewakelock() {
+    (
+        echo "=wakelock.$1 :release()"
+        echo 'EXIT'
+    ) | nc -v localhost 9988
+}
