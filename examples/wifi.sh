@@ -29,5 +29,3 @@ connectNewWifi() {
         echo 'EXIT'
     ) | nc -v localhost 9988
 }
-
-connectNewWifi "$1" "$2"

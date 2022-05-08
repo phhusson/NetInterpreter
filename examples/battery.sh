@@ -31,7 +31,3 @@ batteryCurrentNow() {
 batteryStatus() {
     batteryProperty BATTERY_PROPERTY_STATUS Int
 }
-
-batteryLevel
-batteryCurrentNow
-batteryStatus
