@@ -85,8 +85,6 @@ picture() {
         # Flush and close
         echo '=outFd :flush() =outFd :close()'
 
-        echo 'STACK'
-
         # Close connection
         echo 'EXIT'
     ) | nc -v localhost 9988
