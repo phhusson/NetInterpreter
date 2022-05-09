@@ -71,7 +71,7 @@ picture() {
 
         echo '=imagereader :acquireNextImage() ~img'
         # Get jpeg into a DirectByteBuffer `buffer`
-        echo '=img :getPlanes() [0 INSPECT :getBuffer() ~buffer'
+        echo '=img :getPlanes() [0 :getBuffer() ~buffer'
         # Copy it into a byte[] `bufferArray`
         echo '=buffer :capacity() NEW_BYTE_ARRAY ~bufferArray'
         echo '=bufferArray =buffer :get(byte[])'
