@@ -107,7 +107,8 @@ class MainActivity : AppCompatActivity() {
                     stack.add(str)
                 } else if(w.startsWith(":")) {
                     val v = stack.removeLast()
-                    val methodName = w.substring(1)
+                    val ui = w[1] == '1'
+                    val methodName = if(ui) w.substring(2) else w.substring(1)
                     Log.d(TAG, "Executing function on top of $v")
                     val obj = if(v is Class<*>) null else v
                     val cl = if(v is Class<*>) v else v!!.javaClass
@@ -124,8 +125,14 @@ class MainActivity : AppCompatActivity() {
                     for(i in 0 until method.parameterCount) {
                         parameters[i] = stack.removeLast()
                     }
-                    val res = method.invoke(obj, *parameters)
-                    stack.add(res)
+                    if(ui) {
+                        runOnUiThread {
+                            method.invoke(obj, *parameters)
+                        }
+                    } else {
+                        val res = method.invoke(obj, *parameters)
+                        stack.add(res)
+                    }
                 } else if(w.startsWith("+")) {
                     val v = w.substring(1)
                     val cl = stack.removeLast() as Class<*>

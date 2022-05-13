@@ -33,7 +33,8 @@ It's stack based, plus support storing global variables. Commands are split on s
 - ~<name> consumes top of stack and put it into <name> variable
 - =<name> loads <name> variable at top of stack
 - .<name> loads field <name> from top of stack
-- :<matcher> assuming there is exactly one matching function, call the function with arguments on the stack
+- :<matcher> assuming there is exactly one matching function, call the function with arguments on the stack, and add return to stack
+- :1<matcher> Same but run the function on UI thread, except result doesn't to go stack
 - "xxxx puts the string xxxx on top of the stack
 - """ if a line starts with """, everything after """ until new-line is added at the top of stack
 - +(zz) creates an object of type <top of stack> (MUST BE a Class<>, created with 1xxx for instance) with parameters matching (zz)
