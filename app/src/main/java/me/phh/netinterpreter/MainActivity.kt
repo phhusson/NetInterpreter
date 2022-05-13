@@ -1,8 +1,6 @@
 package me.phh.netinterpreter
 
 import android.annotation.SuppressLint
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -11,8 +9,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.android.dx.stock.ProxyBuilder
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
-import java.net.*
-import java.util.*
+import java.net.Inet6Address
+import java.net.ServerSocket
+import java.net.Socket
 import java.util.concurrent.Executor
 import kotlin.concurrent.thread
 
@@ -258,7 +257,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
         thread {
             server()

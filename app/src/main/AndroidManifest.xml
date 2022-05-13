@@ -5,6 +5,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- use INSTALL_PACKAGES because framework won't freeze apps with that perm -->
+    <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -17,7 +20,8 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
     </application>
